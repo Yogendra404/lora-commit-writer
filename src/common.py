@@ -4,12 +4,12 @@ import re
 import torch
 from transformers import AutoTokenizer
 
-BASE_MODEL = os.environ.get("BASE_MODEL", "Qwen/Qwen2.5-1.5B-Instruct")
+BASE_MODEL = os.environ.get("BASE_MODEL", "Qwen/Qwen2.5-0.5B-Instruct")
 ADAPTER_DIR = "adapter"
 DATA_DIR = "data"
 RESULTS_DIR = "results"
-MAX_LEN = 768          # tokens per training example
-MAX_DIFF_CHARS = 1500  # diff characters kept per example
+MAX_LEN = 768
+MAX_DIFF_CHARS = 1500
 
 SYSTEM_PROMPT = (
     "You are a commit message writer. Given a git diff, reply with exactly one "
@@ -25,8 +25,8 @@ def user_prompt(diff: str) -> str:
 
 
 def get_dtype():
-    """bf16 if the GPU supports it, otherwise fp32 weights (+ fp16 autocast on T4)."""
-    if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
+    # bf16 only on Ampere+ GPUs (capability >= 8); T4 uses fp32 weights + fp16 autocast
+    if torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 8:
         return torch.bfloat16
     return torch.float32
 
